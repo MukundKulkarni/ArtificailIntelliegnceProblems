@@ -159,21 +159,23 @@ while True:
 
             neighbours = curr.neighbours
 
-
+            new_path = False
             for neighbour in neighbours:
                 if neighbour in closed_set or neighbour.wall:
                     continue
 
-                if neighbour in open_set:
+                if neighbour in open_set and neighbour.g < curr.g + 1:
                     neighbour.g = min(neighbour.g, curr.g + 1)
                     new_path = True
                 else:
                     neighbour.g = curr.g + 1
+                    new_path = True
                     open_set.append(neighbour)
 
-                neighbour.h = heuristic(neighbour, end)
-                neighbour.f = neighbour.g + neighbour.h
-                neighbour.previous = curr
+                if new_path:
+                    neighbour.h = heuristic(neighbour, end)
+                    neighbour.f = neighbour.g + neighbour.h
+                    neighbour.previous = curr
 
             if curr == end:
                 temp = end
