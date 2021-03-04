@@ -1,120 +1,291 @@
-
-# By default player goes first, and then computer moves.
-# Player is denoted X, computer is denoted by 0 and blank is denoted by _
-
+import pygame, sys
 import random
+from pygame.locals import *
 
-wining_positions = [[0, 1, 2],[3, 4, 5], [6, 7, 8], # All winning Combinations
-                    [0, 3, 6], [1, 4, 7], [2, 5, 8],
-                    [0, 4, 8], [2, 4, 6]]
 
-scores = {
-    "Draw": 0,
-    "Player": -1,
-    "Computer": 1
-}
+white = (219, 217, 217)
+blue = (157, 214, 250)
+green = (33, 173, 103)
+red = (247, 69, 69)
+yellow = (252, 187, 66)
+black = (0, 0, 0)
+gray = (145, 145, 145)
 
-def playerMove(game_position, available):
-    move = int(input("Enter your Move :"))
-    if move in available:
-        game_position[move] = "X"
-        available.remove(move)
+pygame.init()
+clock = pygame.time.Clock()
+
+length = 200
+breadth = 200
+margin = 5
+rows, cols = 3, 3
+fontsize = 112
+size = width, height = ((length + margin)* cols + margin ) , ((breadth + margin)* rows + margin)
+
+window = pygame.display.set_mode(size)
+font = pygame.font.Font('freesansbold.ttf', fontsize)
+pygame.display.set_caption("Tic Tac Toe")
+
+def drawGrid(rows, cols, board):
+
+    for i in range(rows):
+        for j in range(cols):
+            #available.append([i,j])
+            rect = Rect((margin + length) * j + margin, (margin + breadth) * i + margin, length, breadth)
+            ranges[str(i) + str(j)] = (((margin + length) * j + margin,(margin + breadth) * i + margin ), ((margin + length) * j + margin + length , (margin + breadth) * i + margin + breadth))
+            pygame.draw.rect(window, white, rect)
+
+    pygame.display.update()
+
+def wait():
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+
+def updateWindow(i, j, symbol):
+
+    if symbol == "X":
+        text = font.render(symbol, True, red)
     else:
-        print("Enter a valid Move!!")
-        playerMove(game_position, available)
+        text = font.render(symbol, True, green)
 
-def computerMove(game_position, available, turn):
-    best_score = float("-inf")
-    best_move = None
-    for move in available:
-        game_position[move] = "0"
-        available.remove(move)
-        move_score = miniMax(game_position, available, turn, 0)
-        game_position[move] = "_"
-        available.add(move)
-        if move_score > best_score:
-            best_move = move
+    textRect = text.get_rect()
+    rect = Rect((margin + length) * j + margin, (margin + breadth) * i + margin, length, breadth)
+    textRect.center = rect.center
+    window.blit(text, textRect)
 
-    game_position[best_move] = "0"
-    print("Computer puts circle at {}".format(best_move))
-    available.remove(best_move)
+    pygame.display.update()
 
-def miniMax(game_position, available, isMaximizing, depth):
-    turn = False # True for player
-    result = checkWinner(game_position, available, turn)
+def clearDisplay(rows, cols, board):
+    drawGrid(rows, cols, board)
+
+
+
+def displayWinner(winner):
+    clearDisplay(rows, cols, board)
+    if winner == 1:
+        message = "Computer Won!"
+
+    if winner == -1:
+        message = "Player Won!"
+
+    if winner == 0:
+        message = "Match Draw"
+
+    message = message.split()
+
+
+    message0 = message[0]
+    message1 = message[1]
+
+
+    message0 = font.render(message[0], True, yellow)
+    message1 = font.render(message[1], True, yellow)
+
+
+    rect0 = message0.get_rect()
+    rect1 = message1.get_rect()
+
+    rect0.center = width//2, height//2 - 100
+    rect1.center = width//2, height//2 + 20
+
+    window.blit(message0, rect0)
+    window.blit(message1, rect1)
+
+    pygame.display.update()
+
+
+
+
+def getMove(ranges, move):
+    x, y = move
+    for key, value in ranges.items():
+
+        if x >= value[0][0] and y >= value[0][1] and x <= value[1][0] and y <= value[1][1]:
+            return int(key[0]), int(key[1])
+
+def playerTurn(board):
+    while True:
+        mouse = pygame.mouse.get_pos()
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                pygame.quit()
+
+            #checks if a mouse is clicked
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                #if the mouse is clicked on the available make move
+                move = mouse
+                #print(move)
+                [i, j] = getMove(ranges, move)
+
+                #print([i, j] in available)
+                if board[i][j] == '':
+                    board[i][j] = player
+                    updateWindow(i, j, player)
+                    return True
+
+def bestMove(board):
+
+    bestScore = float("-inf")
+    move = None
+
+    for i in range(3):
+        for j in range(3):
+
+            if board[i][j] == '':
+                board[i][j] = computer
+                score = miniMax(board, 0, False)
+                board[i][j] = ''
+                if score > bestScore:
+                    bestScore = score
+                    move = [i, j]
+
+    return move
+
+
+def miniMax(board, depth, isMaximizing):
+
+    result = checkWinner(board)
+
     if result != None:
-        score = scores[result]
-        return score
+        return result
 
     if isMaximizing:
-        best_score = float("-inf")
-        for move in available:
-            game_position[move] = "X"
-            available.remove(move)
-            move_score = miniMax(game_position, available, False, depth+1)
-            game_position[move] = "_"
-            available.add(move)
-            best_score = min(move_score, best_score)
-        return best_score
+        bestScore = float("-inf")
+
+        for i in range(3):
+            for j in range(3):
+                if board[i][j] == '':
+                    board[i][j] = computer
+                    score = miniMax(board, depth + 1, False)
+                    board[i][j] = ''
+                    bestScore = max(score, bestScore)
+
+        return bestScore
+
     else:
-        best_score = float("inf")
-        for move in available:
-            game_position[move] = "0"
-            available.remove(move)
-            move_score = miniMax(game_position, available, True, depth+1)
-            game_position[move] = "_"
-            available.add(move)
-            best_score = max(move_score, best_score)
-        return best_score
+        bestScore = float("inf")
 
-def checkWinner(game_position, available, turn):
 
-    if len(available) == 0:
-        return "Draw"
+        for i in range(3):
+            for j in range(3):
+                if board[i][j] == '':
+                    board[i][j] = player
+                    score = miniMax(board, depth + 1, True)
+                    board[i][j] = ''
+                    bestScore = min(score, bestScore)
 
-    for wining_position in wining_positions:
-        if turn:
-            if game_position[wining_position[0]] == "X" and game_position[wining_position[1]] == "X" and game_position[wining_position[2]] == "X":
-                return "Player"
-        else:
-            if game_position[wining_position[0]] == "0" and game_position[wining_position[1]] == "0" and game_position[wining_position[2]] == "0":
-                return "Computer"
+        return bestScore
+
+def computerTurn(board):
+    """i, j = random.randint(0,2), random.randint(0, 2)
+    while board[i][j] != '':
+        i, j = random.randint(0,2), random.randint(0, 2)"""
+
+    i, j = bestMove(board)
+
+    board[i][j] = computer
+    pygame.time.delay(500)
+    updateWindow(i, j, computer)
+
+def checkWinner(board):
+
+    for row in range(3) :
+        if (board[row][0] == board[row][1] and board[row][1] == board[row][2]) :
+            if (board[row][0] == player) :
+                return -1
+            elif (board[row][0] == computer) :
+                return 1
+
+    # Checking for Columns for X or O victory.
+    for col in range(3) :
+
+        if (board[0][col] == board[1][col] and board[1][col] == board[2][col]) :
+
+            if (board[0][col] == player) :
+                return -1
+            elif (board[0][col] == computer) :
+                return 1
+
+    # Checking for Diagonals for X or O victory.
+    if (board[0][0] == board[1][1] and board[1][1] == board[2][2]) :
+
+        if (board[0][0] == player) :
+            return -1
+        elif (board[0][0] == computer) :
+            return 1
+
+    if (board[0][2] == board[1][1] and board[1][1] == board[2][0]) :
+
+        if (board[0][2] == player) :
+            return -1
+        elif (board[0][2] == computer) :
+            return 1
+
+    # Else if none of them have won then return 0
+    if not isMovesLeft(board):
+        return 0
 
     return None
 
-def printGame(game_position):
-    print()
-    print(game_position[0:3])
-    print(game_position[3:6])
-    print(game_position[6:9])
-    print(flush = True)
+def isMovesLeft(board) :
 
-def startGame():
-
-    game_position = ["_", "_", "_", "_", "_", "_", "_", "_", "_"] # Shows the current game state
-    available = set([0, 1, 2, 3, 4, 5, 6, 7, 8]) # Shows available valid moves
-    game_over = False # True if game is over or if we run out of moves
-    turn = True # True For player, False for Computer
-    winner = None
+    for i in range(3) :
+        for j in range(3) :
+            if (board[i][j] == '') :
+                return True
+    return False
 
 
-    while winner == None:
+board = [
+    ['', '', ''],
+    ['', '', ''],
+    ['', '', '']
+]
+
+ranges = {}
+
+player = "X"
+computer = "O"
+
+game_over = False
+
+turn = True
+
+while True:
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT: sys.exit()
+
+    drawGrid(rows, cols, board)
+
+    while True:
+
         if turn:
-            playerMove(game_position, available)
-            winner = checkWinner(game_position,available, turn)
+            playerTurn(board)
             turn = False
+
         else:
-            computerMove(game_position, available, turn)
-            winner = checkWinner(game_position, available, turn)
-            turn = True
+            computerTurn(board)
+            turn  = True
 
-        printGame(game_position)
+        winner = checkWinner(board)
 
-        if winner != None:
-            if winner == "Draw":
-                print("Match Draw")
-            else:
-                print("{} Won!!".format(winner))
+        if winner == -1:
+            print("Player Won!")
+            break
 
-if __name__ == "__main__":
-    startGame()
+        if winner == 1:
+            print("Computer Won!")
+            break
+
+        if winner == 0:
+            print("Match Draw!")
+            break
+
+    pygame.time.delay(800)
+    displayWinner(winner)
+    wait()
