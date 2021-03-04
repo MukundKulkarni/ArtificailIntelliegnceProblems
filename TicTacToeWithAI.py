@@ -7,7 +7,7 @@ white = (219, 217, 217)
 blue = (157, 214, 250)
 green = (33, 173, 103)
 red = (247, 69, 69)
-yellow = (252, 187, 66)
+yellow = (249, 181, 0)
 black = (0, 0, 0)
 gray = (145, 145, 145)
 
@@ -27,21 +27,35 @@ pygame.display.set_caption("Tic Tac Toe")
 
 def drawGrid(rows, cols, board):
 
+    window.fill(black)
+
     for i in range(rows):
         for j in range(cols):
             #available.append([i,j])
             rect = Rect((margin + length) * j + margin, (margin + breadth) * i + margin, length, breadth)
-            ranges[str(i) + str(j)] = (((margin + length) * j + margin,(margin + breadth) * i + margin ), ((margin + length) * j + margin + length , (margin + breadth) * i + margin + breadth))
             pygame.draw.rect(window, white, rect)
 
     pygame.display.update()
 
 def wait():
     while True:
+        mouse = pygame.mouse.get_pos()
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                #if the mouse is clicked on the available make move
+                x, y = mouse
+                #print(move)
+                if x >= 235 and y >= 430 and x <= 385 and y <= 580:
+                    startGame()
+
+
+
+
 
 def updateWindow(i, j, symbol):
 
@@ -62,7 +76,7 @@ def clearDisplay(rows, cols, board):
 
 
 
-def displayWinner(winner):
+def displayWinner(winner, board):
     clearDisplay(rows, cols, board)
     if winner == 1:
         message = "Computer Won!"
@@ -82,6 +96,9 @@ def displayWinner(winner):
 
     message0 = font.render(message[0], True, yellow)
     message1 = font.render(message[1], True, yellow)
+    image = pygame.image.load("Images/restart.png")
+    image = pygame.transform.scale(image, (150, 150))
+
 
 
     rect0 = message0.get_rect()
@@ -92,6 +109,8 @@ def displayWinner(winner):
 
     window.blit(message0, rect0)
     window.blit(message1, rect1)
+
+    window.blit(image, (230, 435))
 
     pygame.display.update()
 
@@ -240,52 +259,61 @@ def isMovesLeft(board) :
     return False
 
 
-board = [
-    ['', '', ''],
-    ['', '', ''],
-    ['', '', '']
-]
+
 
 ranges = {}
+
+for i in range(rows):
+    for j in range(cols):
+        ranges[str(i) + str(j)] = (((margin + length) * j + margin,(margin + breadth) * i + margin ), ((margin + length) * j + margin + length , (margin + breadth) * i + margin + breadth))
 
 player = "X"
 computer = "O"
 
-game_over = False
 
-turn = True
+def startGame():
+    board = [
+        ['', '', ''],
+        ['', '', ''],
+        ['', '', '']
+    ]
 
-while True:
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT: sys.exit()
-
-    drawGrid(rows, cols, board)
+    turn = True
 
     while True:
 
-        if turn:
-            playerTurn(board)
-            turn = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: sys.exit()
 
-        else:
-            computerTurn(board)
-            turn  = True
+        drawGrid(rows, cols, board)
 
-        winner = checkWinner(board)
+        while True:
 
-        if winner == -1:
-            print("Player Won!")
-            break
+            if turn:
+                playerTurn(board)
+                turn = False
 
-        if winner == 1:
-            print("Computer Won!")
-            break
+            else:
+                computerTurn(board)
+                turn  = True
 
-        if winner == 0:
-            print("Match Draw!")
-            break
+            winner = checkWinner(board)
 
-    pygame.time.delay(800)
-    displayWinner(winner)
-    wait()
+            if winner == -1:
+                print("Player Won!")
+                break
+
+            if winner == 1:
+                print("Computer Won!")
+                break
+
+            if winner == 0:
+                print("Match Draw!")
+                break
+
+        pygame.time.delay(800)
+        displayWinner(winner, board)
+        wait()
+
+if __name__ == "__main__":
+    startGame()
