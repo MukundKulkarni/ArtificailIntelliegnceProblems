@@ -72,7 +72,7 @@ def updateWindow(i, j, symbol):
     pygame.display.update()
 
 def clearDisplay(rows, cols, board):
-    drawGrid(rows, cols, board)
+    window.fill()
 
 
 
